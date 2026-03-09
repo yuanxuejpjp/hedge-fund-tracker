@@ -8,7 +8,11 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import os
+import sys
 from datetime import datetime
+
+# 获取当前文件所在目录
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # 页面配置
 st.set_page_config(
@@ -46,13 +50,14 @@ st.markdown("""
 @st.cache_data
 def load_funds_list():
     """加载基金列表"""
-    df = pd.read_csv('database/hedge_funds.csv')
+    file_path = os.path.join(BASE_DIR, 'database', 'hedge_funds.csv')
+    df = pd.read_csv(file_path)
     return df
 
 @st.cache_data
 def load_fund_data(quarter, fund_name):
     """加载特定基金的持仓数据"""
-    file_path = f'database/{quarter}/{fund_name}.csv'
+    file_path = os.path.join(BASE_DIR, 'database', quarter, f'{fund_name}.csv')
     if os.path.exists(file_path):
         df = pd.read_csv(file_path)
         return df
@@ -62,9 +67,12 @@ def load_fund_data(quarter, fund_name):
 def get_all_quarters():
     """获取所有季度目录"""
     quarters = []
-    for item in os.listdir('database'):
-        if item.startswith('20') and os.path.isdir(f'database/{item}'):
-            quarters.append(item)
+    database_path = os.path.join(BASE_DIR, 'database')
+    if os.path.exists(database_path):
+        for item in os.listdir(database_path):
+            item_path = os.path.join(database_path, item)
+            if item.startswith('20') and os.path.isdir(item_path):
+                quarters.append(item)
     return sorted(quarters, reverse=True)
 
 def render_header():
@@ -142,7 +150,7 @@ def render_home():
         total_holdings = 0
         if quarters:
             latest_quarter = quarters[0]
-            quarter_path = f'database/{latest_quarter}'
+            quarter_path = os.path.join(BASE_DIR, 'database', latest_quarter)
             if os.path.exists(quarter_path):
                 total_holdings = len([f for f in os.listdir(quarter_path) if f.endswith('.csv')])
         st.metric("📈 持仓报告", total_holdings)
@@ -155,7 +163,8 @@ def render_fund_holdings(quarter):
     funds_df = load_funds_list()
     
     # 基金选择
-    fund_names = [f.replace('.csv', '') for f in os.listdir(f'database/{quarter}') if f.endswith('.csv')]
+    quarter_path = os.path.join(BASE_DIR, 'database', quarter)
+    fund_names = [f.replace('.csv', '') for f in os.listdir(quarter_path) if f.endswith('.csv')]
     fund_names = sorted(fund_names)
     
     if not fund_names:
@@ -234,7 +243,8 @@ def render_hot_stocks(quarter):
     
     # 加载所有基金的持仓
     all_holdings = []
-    fund_names = [f.replace('.csv', '') for f in os.listdir(f'database/{quarter}') if f.endswith('.csv')]
+    quarter_path = os.path.join(BASE_DIR, 'database', quarter)
+    fund_names = [f.replace('.csv', '') for f in os.listdir(quarter_path) if f.endswith('.csv')]
     
     for fund in fund_names:
         data = load_fund_data(quarter, fund)
