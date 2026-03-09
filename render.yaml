@@ -3,8 +3,3 @@ services:
     name: hedge-fund-tracker
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: python startup.py
-    envVars:
-      - key: PYTHON_VERSION
-        value: 3.11.0
